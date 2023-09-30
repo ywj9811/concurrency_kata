@@ -41,7 +41,7 @@ public class ConcurrencyTest {
         int after = bookService.countStock(1L);
 
         //100 - (1*100) = 0
-        System.out.println("Except : "+ (before-100) + "\nActual : " + after);
+        System.out.println("Except : "+ 100 + "\nActual : " + (before - after));
         assertThat(after).isNotEqualTo(before-100);
     }
 
@@ -69,7 +69,7 @@ public class ConcurrencyTest {
         int after = bookService.countStock(1L);
 
         //100 - (1*100) = 0
-        System.out.println("Except : "+ (before-100) + "\nActual : " + after);
+        System.out.println("Except : "+ 100 + "\nActual : " + (before - after));
         assertThat(after).isEqualTo(before-100);
     }
 }
