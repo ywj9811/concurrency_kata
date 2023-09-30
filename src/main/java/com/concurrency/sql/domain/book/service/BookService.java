@@ -23,6 +23,7 @@ public class BookService {
         Book book = bookRepository.findById(id).orElseThrow();
         log.info("ThreadID : {} ", Thread.currentThread().getId());
         book.minusStock();
+        bookRepository.saveAndFlush(book);
     }
 
     @Transactional
@@ -30,6 +31,7 @@ public class BookService {
         Book book = bookRepository.findByIdWithPessimisticWrite(id).orElseThrow();
         log.info("ThreadID : {} ", Thread.currentThread().getId());
         book.minusStock();
+        bookRepository.saveAndFlush(book);
         return book.getStock();
     }
 
@@ -44,14 +46,16 @@ public class BookService {
         int wait = 0;
         while (!redisRepository.lock(id.toString())) {
             wait++;
-//            Thread.sleep(100);
+            Thread.sleep(100);
             //계속해서 lock을 확인하면 너무 자주 확인하니 100ms대기
             log.info("ThreadID : {} 대기 - {}번째", Thread.currentThread().getId(), wait);
         } // 락을 획득하기 위해 대기
 
         try {
             Book book = bookRepository.findById(id).orElseThrow();
-            book.minusStock();
+            int count = book.minusStock();
+            log.info("count : {}", count);
+            bookRepository.saveAndFlush(book);
         } finally {
             redisRepository.deleteLock(id.toString());
             // 락 해제

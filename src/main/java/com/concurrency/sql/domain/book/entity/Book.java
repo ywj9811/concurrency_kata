@@ -22,11 +22,17 @@ public class Book {
     private String bookName;
     private int stock;
 
-    public void minusStock() {
-        if (this.stock - 1 < 0) {
+    public int minusStock() {
+        if (stock - 1 < 0) {
             throw new RuntimeException("재고 부족");
         }
         this.stock--;
+        return stock;
+    }
+
+    public int minus(int stock) {
+        this.stock = stock;
+        return stock;
     }
 
     public void setting() {
