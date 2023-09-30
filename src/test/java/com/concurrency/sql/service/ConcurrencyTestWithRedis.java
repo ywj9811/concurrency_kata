@@ -1,6 +1,6 @@
 package com.concurrency.sql.service;
 
-import com.concurrency.sql.domain.book.service.BookService;
+import com.concurrency.sql.domain.book.service.BookServiceWithRedis;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,13 +13,13 @@ import java.util.concurrent.Executors;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
-public class ConcurrencyTest {
+public class ConcurrencyTestWithRedis {
     @Autowired
-    private BookService bookService;
+    private BookServiceWithRedis bookService;
 
     @Test
-    @DisplayName("Basic_Nothing")
-    void concurrencyCheck() throws InterruptedException {
+    @DisplayName("With_Redis_SpinLock")
+    void concurrencyCheckWithSpinLock() throws InterruptedException {
         int before = bookService.countStock(1L);
         int threadCount = 100;
         //멀티스레드 이용 ExecutorService : 비동기를 단순하게 처리할 수 있도록 해주는 java api
@@ -30,7 +30,12 @@ public class ConcurrencyTest {
 
         for (int i = 0; i < threadCount; i++) {
             executorService.execute(() -> {
-                        bookService.orderBook(1L);
+                        try {
+                            bookService.orderBookByRedisWithSpinLock(1L);
+                        } catch (InterruptedException e) {
+                            System.out.println("예외 발생");
+                            throw new RuntimeException(e);
+                        }
                         latch.countDown();
                     }
             );
@@ -42,12 +47,12 @@ public class ConcurrencyTest {
 
         //100 - (1*100) = 0
         System.out.println("Except : "+ 100 + "\nActual : " + (before - after));
-        assertThat(after).isNotEqualTo(before-100);
+        assertThat(after).isEqualTo(before-100);
     }
 
     @Test
-    @DisplayName("With_Mysql_ExclusiveLock")
-    void concurrencyCheckWithLock() throws InterruptedException {
+    @DisplayName("With_Redis_Redisson")
+    void concurrencyCheckWithRedisson() throws InterruptedException {
         int before = bookService.countStock(1L);
         int threadCount = 100;
         //멀티스레드 이용 ExecutorService : 비동기를 단순하게 처리할 수 있도록 해주는 java api
@@ -58,7 +63,7 @@ public class ConcurrencyTest {
 
         for (int i = 0; i < threadCount; i++) {
             executorService.execute(() -> {
-                        bookService.orderBookByLock(1L);
+                        bookService.orderBookByRedisWithRedisson(1L);
                         latch.countDown();
                     }
             );
